@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+  zookeeper-server:
+    image: bitnami/zookeeper:3.9
+    container_name: zookeeper-server
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka-server:
+    image: bitnami/kafka:3.5
+    container_name: kafka-server
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper-server:2181
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-server:9092,PLAINTEXT_HOST://localhost:29092
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+    depends_on:
+      - zookeeper-server
+
+  influxdb:
+    image: influxdb:1.8
+    ports:
+      - "0.0.0.0:8086:8086"
+    container_name: influxdb
+    hostname: influxdb
+    environment:
+      - INFLUXDB_ADMIN_ENABLED=true
+      - INFLUXDB_DB=classification
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "0.0.0.0:3000:3000"
+    container_name: grafana
+    hostname: grafana
+
+networks:
+  default:
+    external:
+      name: bde
